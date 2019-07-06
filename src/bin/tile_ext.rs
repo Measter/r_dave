@@ -1,5 +1,4 @@
 use std::{
-    path::Path,
     fs::File,
     io::{Read, BufReader, Seek, SeekFrom},
     error::Error,
