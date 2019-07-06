@@ -1,10 +1,9 @@
 use std::{
     fs::File,
-    io::{Read, BufReader, Seek, SeekFrom, BufWriter},
+    io::{Read, BufReader, Seek, SeekFrom, BufWriter, Write as IoWrite},
     error::Error,
-    fmt::Write,
+    fmt::Write as FmtWrite,
 };
-use byteorder::{WriteBytesExt};
 use image::{RgbImage, GenericImage};
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
@@ -45,25 +44,16 @@ fn extract_levels() -> Result<Vec<DaveLevel>> {
         let mut level_file = BufWriter::new(level_file);
 
         // Stream path data.
-        for (l, byte) in level.path.iter_mut().zip((&mut file).bytes()) {
-            let byte = byte?;
-            *l = byte;
-            level_file.write_u8(byte)?;
-        }
+        file.read_exact(&mut level.path)?;
+        level_file.write_all(&level.path)?;
 
         // Stream tile indices.
-        for (l, byte) in level.tiles.iter_mut().zip((&mut file).bytes()) {
-            let byte = byte?;
-            *l = byte;
-            level_file.write_u8(byte)?;
-        }
+        file.read_exact(&mut level.tiles)?;
+        level_file.write_all(&level.tiles)?;
 
         // Stream padding.
-        for (l, byte) in level.padding.iter_mut().zip((&mut file).bytes()) {
-            let byte = byte?;
-            *l = byte;
-            level_file.write_u8(byte)?;
-        }
+        file.read_exact(&mut level.padding)?;
+        level_file.write_all(&level.padding)?;
 
         name_buf.clear();
     }
