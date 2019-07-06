@@ -3,6 +3,7 @@ use std::{
     io::{Read, BufReader, Seek, SeekFrom},
     error::Error,
     iter,
+    fmt::Write,
 };
 use byteorder::{ReadBytesExt, LittleEndian};
 use image::{Rgb, RgbImage};
@@ -87,6 +88,7 @@ fn read_tile_indices(mut raw_data: &[u8]) -> Result<Vec<u32>> {
 fn make_tiles(raw_data: &[u8], palette: &[Rgb<u8>], indices: &[u32]) -> Result<()> {
     print!("Saving tiles...");
 
+    let mut name_buf = String::new();
     for (current_tile, current_byte) in indices.iter().enumerate() {
         let mut current_byte = *current_byte as usize;
 
@@ -111,8 +113,9 @@ fn make_tiles(raw_data: &[u8], palette: &[Rgb<u8>], indices: &[u32]) -> Result<(
             .zip(surface.pixels_mut())
             .for_each(|(c, p)| *p = c);
 
-        let name = format!("tiles/tile{}.bmp", current_tile);
-        surface.save(&name)?;
+        write!(&mut name_buf, "tiles/tile{}.bmp", current_tile)?;
+        surface.save(&name_buf)?;
+        name_buf.clear();
     }
 
     println!("done");
