@@ -10,6 +10,8 @@ use crate::{SCALE, Result};
 
 const NUM_TILES: u8 = 158;
 
+// See the level.rs file comment for the reason behind this data structure.
+
 #[derive(Debug)]
 pub struct TileSet(Vec<G2dTexture>);
 

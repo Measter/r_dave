@@ -12,6 +12,17 @@ use crate::tileset::TileId;
 
 const NUM_LEVELS: usize = 10;
 
+// Because the level list will be accessed on every frame, I've opted to bypass the
+// bounds check. To ensure that the access is still safe, i've wrapped the vector of
+// Level structures, and the index into that vector, in a newtype.
+
+// Because I've left the fields of those newtypes private, the only place they can be
+// accessed directly is in this module, meaning the types can only be constructed in
+// here.
+
+// Due to that restriction, we only need to ensure that the index is valid in this
+// file, and not in every single access of the level vector.
+
 pub struct Levels(Vec<Level>);
 
 impl Index<LevelId> for Levels {
