@@ -22,6 +22,10 @@ impl Assets {
         &self.levels[id]
     }
 
+    pub fn get_level_mut(&mut self, id: LevelId) -> &mut Level {
+        &mut self.levels[id]
+    }
+
     pub fn get_tile(&self, id: TileId) -> &G2dTexture {
         &self.tiles[id]
     }

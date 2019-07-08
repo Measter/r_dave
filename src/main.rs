@@ -16,16 +16,19 @@ mod level;
 mod renderer;
 mod game;
 mod assets;
+mod input;
 
 use crate::{
     game::*,
     assets::*,
+    input::Input,
 };
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 const GL_VERSION: OpenGL = OpenGL::V4_5;
 const SCALE: u32 = 3;
+const TILE_SIZE: u32 = 16;
 
 fn main() -> Result<()> {
     let mut window: Window = WindowSettings::new(
@@ -40,16 +43,18 @@ fn main() -> Result<()> {
     window.set_max_fps(30);
     window.set_ups(30);
 
-    let assets = Assets::init(window.create_texture_context())?;
+    let mut assets = Assets::init(window.create_texture_context())?;
+    let mut input = Input::default();
     let mut game = Game::init()?;
 
     while let Some(e) = window.next() {
-        if let Some(Button::Keyboard(key)) = e.press_args() {
-            game.input(key);
+        if let Some(key) = e.button_args() {
+            input.update(key);
         }
 
-        if let Some(u) = e.update_args() {
-            game.update(&u);
+        if let Some(_) = e.update_args() {
+            game.input(&input);
+            game.update(&mut assets);
         }
 
         renderer::render(&mut window, &e, &game, &assets);

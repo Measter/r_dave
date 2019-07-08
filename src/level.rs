@@ -9,6 +9,7 @@ use byteorder::ReadBytesExt;
 
 use crate::Result;
 use crate::tileset::TileId;
+use std::ops::IndexMut;
 
 const NUM_LEVELS: usize = 10;
 
@@ -31,6 +32,12 @@ impl Index<LevelId> for Levels {
         // We're indexing through a type that can only be constructed by going
         // through validation, so we can skip bounds checking.
         unsafe { self.0.get_unchecked(idx.0) }
+    }
+}
+
+impl IndexMut<LevelId> for Levels {
+    fn index_mut(&mut self, idx:LevelId) -> &mut Self::Output {
+        unsafe { self.0.get_unchecked_mut(idx.0) }
     }
 }
 
@@ -71,6 +78,10 @@ impl Level {
 
     pub fn tiles(&self) -> &[TileId] {
         &self.tiles
+    }
+
+    pub fn tiles_mut(&mut self) -> &mut [TileId] {
+        &mut self.tiles
     }
 }
 
