@@ -1,11 +1,6 @@
 use piston_window::*;
 
-use crate::{
-    SCALE,
-    game::*,
-    assets::*,
-    tileset::*,
-};
+use crate::{SCALE, game::*, assets::*, tileset::*, TILE_SIZE};
 
 pub fn render(window: &mut PistonWindow, event: &Event, game: &Game, assets: &Assets) {
     window.draw_2d(event, |c, gl, _| {
@@ -23,7 +18,7 @@ fn draw_world(c: Context, gl: &mut G2d, game: &Game, assets: &Assets ) {
         .map(|(i, &t)| (i/100, i%100 - game.view_x() as usize, t));
 
     for (y, x, tile) in tiles {
-        let transform = c.transform.trans((x as u32 * 16*SCALE) as f64, (y as u32 * 16*SCALE) as f64);
+        let transform = c.transform.trans((x as u32 * TILE_SIZE *SCALE) as f64, (y as u32 * TILE_SIZE * SCALE) as f64);
 
         let tile_image = assets.get_tile(tile);
 
