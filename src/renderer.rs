@@ -1,6 +1,12 @@
 use piston_window::*;
 
-use crate::{SCALE, game::*, assets::*, tileset::*, TILE_SIZE};
+use crate::{
+    SCALE, TILE_SIZE,
+    game::*,
+    assets::*,
+    tileset::*,
+    dave::*,
+};
 
 pub fn render(window: &mut PistonWindow, event: &Event, game: &Game, assets: &Assets) {
     window.draw_2d(event, |c, gl, _| {
@@ -36,13 +42,13 @@ fn draw_dave(c: Context, gl: &mut G2d, game: &Game, assets: &Assets) {
         (dave.pixel_position().y * SCALE as i16) as f64,
     );
 
-    let tile_image = if dave.is_jetpack() {
+    let tile_image = if dave.is_jetpacking() {
         match dave.direction() {
             Direction::Middle => TileId::TILE_DAVE_BASIC,
             Direction::Left => TileId::TILE_DAVE_JETPACK_LEFT1,
             Direction::Right => TileId::TILE_DAVE_JETPACK_RIGHT1,
         }
-    } else if dave.on_ground() {
+    } else if dave.on_ground {
         match dave.direction() {
             Direction::Middle => TileId::TILE_DAVE_BASIC,
             Direction::Left => TileId::TILE_DAVE_LEFT1,

@@ -17,6 +17,7 @@ mod renderer;
 mod game;
 mod assets;
 mod input;
+mod dave;
 
 use crate::{
     game::*,
