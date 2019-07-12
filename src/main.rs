@@ -55,6 +55,11 @@ fn main() -> Result<()> {
         if let Some(_) = e.update_args() {
             game.input(&input);
             game.update(&mut assets);
+            if game.quit() {
+                break;
+            }
+
+            input.clear_toggles();
         }
 
         renderer::render(&mut window, &e, &game, &assets);

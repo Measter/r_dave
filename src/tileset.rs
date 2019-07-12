@@ -28,13 +28,27 @@ impl Index<TileId> for TileSet {
 pub struct TileId(u8);
 
 impl TileId {
-    pub const fn tile_dave_basic() -> TileId {
-        TileId(56)
-    }
+    pub const TILE_DAVE_RIGHT1: TileId = TileId(53);
+    pub const TILE_DAVE_RIGHT2: TileId = TileId(54);
+    pub const TILE_DAVE_RIGHT3: TileId = TileId(55);
+    pub const TILE_DAVE_BASIC: TileId = TileId(56);
+    pub const TILE_DAVE_LEFT1: TileId = TileId(57);
+    pub const TILE_DAVE_LEFT2: TileId = TileId(58);
+    pub const TILE_DAVE_LEFT3: TileId = TileId(59);
+    pub const TILE_DAVE_JETPACK_RIGHT1: TileId = TileId(77);
+    pub const TILE_DAVE_JETPACK_RIGHT2: TileId = TileId(78);
+    pub const TILE_DAVE_JETPACK_RIGHT3: TileId = TileId(79);
+    pub const TILE_DAVE_JETPACK_LEFT1: TileId = TileId(80);
+    pub const TILE_DAVE_JETPACK_LEFT2: TileId = TileId(81);
+    pub const TILE_DAVE_JETPACK_LEFT3: TileId = TileId(81);
+    pub const TILE_DAVE_JUMP_RIGHT: TileId = TileId(67);
+    pub const TILE_DAVE_JUMP_LEFT: TileId = TileId(68);
 
-    pub const fn tile_blank() -> TileId {
-        TileId(0)
-    }
+    pub const TILE_BLANK: TileId = TileId(0);
+    pub const TILE_GUN: TileId = TileId(20);
+    pub const TILE_JETPACK: TileId = TileId(4);
+    pub const TILE_BULLET_LEFT: TileId = TileId(128);
+    pub const TILE_BULLET_RIGHT: TileId = TileId(127);
 }
 
 impl TileId {
@@ -55,7 +69,18 @@ impl TileId {
 
     pub fn is_pickup(self) -> bool {
         match self.0 {
-            10 | 47..=52 => true,
+            4 | 10..=14 | 20 | 47..=52 => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_door(self) -> bool {
+        self.0 == 2
+    }
+
+    pub fn is_trophy(self) -> bool {
+        match self.0 {
+            10..=14 => true,
             _ => false,
         }
     }

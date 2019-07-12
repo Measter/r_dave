@@ -7,8 +7,11 @@ use std::{
 
 use byteorder::ReadBytesExt;
 
-use crate::Result;
-use crate::tileset::TileId;
+use crate::{
+    Result,
+    tileset::TileId,
+    game::Position,
+};
 use std::ops::IndexMut;
 
 const NUM_LEVELS: usize = 10;
@@ -45,24 +48,32 @@ impl IndexMut<LevelId> for Levels {
 pub struct LevelId(usize);
 
 impl LevelId {
-    pub fn next(self) -> LevelId {
+    pub fn next(self) -> Option<LevelId> {
         if self.0 < (NUM_LEVELS - 1) {
-            LevelId(self.0 + 1)
+            Some(LevelId(self.0 + 1))
         } else {
-            self
-        }
-    }
-
-    pub fn prev(self) -> LevelId {
-        if self.0 > 0 {
-            LevelId(self.0 - 1)
-        } else {
-            self
+            None
         }
     }
 
     pub const fn first_level() -> LevelId {
         LevelId(0)
+    }
+
+    pub fn start_position(self) -> Position<u8> {
+        match self.0 {
+            0 => Position { x: 2, y: 8 },
+            1 => Position { x: 1, y: 8 },
+            2 => Position { x: 2, y: 5 },
+            3 => Position { x: 1, y: 5 },
+            4 => Position { x: 2, y: 8 },
+            5 => Position { x: 2, y: 8 },
+            6 => Position { x: 1, y: 2 },
+            7 => Position { x: 2, y: 8 },
+            8 => Position { x: 6, y: 1 },
+            9 => Position { x: 2, y: 8 },
+            _ => unreachable!()
+        }
     }
 }
 
