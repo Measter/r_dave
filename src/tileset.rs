@@ -49,6 +49,24 @@ impl TileId {
     pub const TILE_JETPACK: TileId = TileId(4);
     pub const TILE_BULLET_LEFT: TileId = TileId(128);
     pub const TILE_BULLET_RIGHT: TileId = TileId(127);
+    pub const TILE_ENEMY_BULLET_RIGHT1: TileId = TileId(121);
+    pub const TILE_ENEMY_BULLET_RIGHT2: TileId = TileId(122);
+    pub const TILE_ENEMY_BULLET_RIGHT3: TileId = TileId(123);
+    pub const TILE_ENEMY_BULLET_LEFT1: TileId = TileId(124);
+    pub const TILE_ENEMY_BULLET_LEFT2: TileId = TileId(125);
+    pub const TILE_ENEMY_BULLET_LEFT3: TileId = TileId(126);
+
+    pub const TILE_MONSTER_SPIDER1: TileId = TileId(89);
+    pub const TILE_MONSTER_SPIDER2: TileId = TileId(90);
+    pub const TILE_MONSTER_SPIDER3: TileId = TileId(91);
+    pub const TILE_MONSTER_SPIDER4: TileId = TileId(92);
+
+    pub const TILE_MONSTER_WHEEL1: TileId = TileId(93);
+    pub const TILE_MONSTER_WHEEL2: TileId = TileId(94);
+    pub const TILE_MONSTER_WHEEL3: TileId = TileId(95);
+    pub const TILE_MONSTER_WHEEL4: TileId = TileId(96);
+
+    pub const TILE_MONSTER_DYING1: TileId = TileId(129);
 }
 
 impl TileId {
@@ -64,6 +82,13 @@ impl TileId {
         match self.0 {
             1 | 3 | 5 | 15..=19 | 21..=24 | 29 | 30 => true,
             _ => false,
+        }
+    }
+
+    pub fn is_hazard(self) -> bool {
+        match self.0 {
+            6..=9 | 25..=28 | 36..=40 => true,
+            _ => false
         }
     }
 

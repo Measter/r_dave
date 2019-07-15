@@ -11,10 +11,12 @@ use crate::{
     Result,
     tileset::TileId,
     game::Position,
+    monster::Monster,
 };
 use std::ops::IndexMut;
 
 const NUM_LEVELS: usize = 10;
+const MONSTER_PATH_LEN: usize = 128;
 
 // Because the level list will be accessed on every frame, I've opted to bypass the
 // bounds check. To ensure that the access is still safe, i've wrapped the vector of
@@ -75,15 +77,35 @@ impl LevelId {
             _ => unreachable!()
         }
     }
+
+    pub fn monsters(self) -> [Monster; 5] {
+        match self.0 {
+            2 => [
+                Monster::init_live(TileId::TILE_MONSTER_SPIDER1, Position { x: 44, y: 4 }),
+                Monster::init_live(TileId::TILE_MONSTER_SPIDER1, Position { x: 59, y: 4 }),
+                Monster::init_dead(),
+                Monster::init_dead(),
+                Monster::init_dead(),
+            ],
+            3 => [
+                Monster::init_live(TileId::TILE_MONSTER_WHEEL1, Position { x: 32, y: 2 }),
+                Monster::init_dead(),
+                Monster::init_dead(),
+                Monster::init_dead(),
+                Monster::init_dead(),
+            ],
+            _ => [Monster::init_dead(), Monster::init_dead(), Monster::init_dead(), Monster::init_dead(), Monster::init_dead()],
+        }
+    }
 }
 
 pub struct Level {
-    path: [(i8, i8); 128],
+    path: MonsterPath,
     tiles: [TileId; 1000],
 }
 
 impl Level {
-    pub fn path(&self) -> &[(i8, i8)] {
+    pub fn path(&self) -> &MonsterPath {
         &self.path
     }
 
@@ -95,6 +117,38 @@ impl Level {
         &mut self.tiles
     }
 }
+
+pub struct MonsterPath([Position<i16>; 128]);
+
+impl MonsterPath {
+    pub const PATH_END: Position<i16> = Position { x: 0xEA, y: 0xEA };
+}
+
+impl Index<MonsterPathIndex> for MonsterPath {
+    type Output = Position<i16>;
+    fn index(&self, idx: MonsterPathIndex) -> &Self::Output {
+        // As with the level indexing above, we know that the index has been
+        // verified to be in bounds at this point, so we can do an unchecked
+        // indexing.
+        unsafe { self.0.get_unchecked(idx.0) }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct MonsterPathIndex(usize);
+
+impl MonsterPathIndex {
+    pub const START: MonsterPathIndex = MonsterPathIndex(0);
+
+    pub fn next(self) -> MonsterPathIndex {
+        if self.0 < (MONSTER_PATH_LEN - 1) {
+            MonsterPathIndex(self.0 + 1)
+        } else {
+            MonsterPathIndex::START
+        }
+    }
+}
+
 
 pub fn load_levels() -> Result<Levels> {
     let mut levels = Vec::new();
@@ -109,13 +163,13 @@ pub fn load_levels() -> Result<Levels> {
         let mut file = BufReader::new(file);
 
         let mut level = Level {
-            path: [(0, 0); 128],
-            tiles: [TileId::new(0)?; 1000],
+            path: MonsterPath([Default::default(); 128]),
+            tiles: [TileId::TILE_BLANK; 1000],
         };
 
-        for pair in level.path.iter_mut() {
-            pair.0 = file.read_i8()?;
-            pair.1 = file.read_i8()?;
+        for pair in level.path.0.iter_mut() {
+            pair.x = file.read_i8()? as i16;
+            pair.y = file.read_i8()? as i16;
         }
 
         for t in level.tiles.iter_mut() {

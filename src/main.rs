@@ -18,6 +18,7 @@ mod game;
 mod assets;
 mod input;
 mod dave;
+mod monster;
 
 use crate::{
     game::*,

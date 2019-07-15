@@ -5,7 +5,6 @@ use crate::{
     game::*,
     assets::*,
     tileset::*,
-    dave::*,
 };
 
 pub fn render(window: &mut PistonWindow, event: &Event, game: &Game, assets: &Assets) {
@@ -14,7 +13,12 @@ pub fn render(window: &mut PistonWindow, event: &Event, game: &Game, assets: &As
 
         draw_world(c, gl, game, assets);
         draw_dave(c, gl, game, assets);
+        draw_monsters(c, gl, game, assets);
         if let Some(b) = game.dave().bullet() {
+            draw_bullet(c, gl, b, game, assets);
+        }
+
+        if let Some(b) = game.monster_bullet() {
             draw_bullet(c, gl, b, game, assets);
         }
     });
@@ -42,13 +46,15 @@ fn draw_dave(c: Context, gl: &mut G2d, game: &Game, assets: &Assets) {
         (dave.pixel_position().y * SCALE as i16) as f64,
     );
 
-    let tile_image = if dave.is_jetpacking() {
+    let tile_image = if !dave.is_alive() {
+        TileId::TILE_MONSTER_DYING1
+    } else if dave.is_jetpacking() {
         match dave.direction() {
             Direction::Middle => TileId::TILE_DAVE_BASIC,
             Direction::Left => TileId::TILE_DAVE_JETPACK_LEFT1,
             Direction::Right => TileId::TILE_DAVE_JETPACK_RIGHT1,
         }
-    } else if dave.on_ground {
+    } else if dave.is_on_ground() {
         match dave.direction() {
             Direction::Middle => TileId::TILE_DAVE_BASIC,
             Direction::Left => TileId::TILE_DAVE_LEFT1,
@@ -66,15 +72,29 @@ fn draw_dave(c: Context, gl: &mut G2d, game: &Game, assets: &Assets) {
     image(tile_image, transform, gl);
 }
 
+fn draw_monsters(c: Context, gl: &mut G2d, game: &Game, assets: &Assets) {
+    for monster in game.monsters().iter().filter(|m| m.is_not_dead()) {
+        let transform = c.transform.trans(
+            ((monster.pixel_position().x - (game.view_x() as i16 * TILE_SIZE as i16)) * SCALE as i16) as f64,
+            (monster.pixel_position().y * SCALE as i16) as f64,
+        );
+
+        let tile_image = assets.get_tile(monster.tile_id());
+        image(tile_image, transform, gl);
+    }
+}
+
 fn draw_bullet(c: Context, gl: &mut G2d, bullet: &Bullet, game: &Game, assets: &Assets) {
     let transform = c.transform.trans(
         ((bullet.position.x - (game.view_x() as i16 * TILE_SIZE as i16)) * SCALE as i16) as f64,
         (bullet.position.y * SCALE as i16) as f64,
     );
 
-    let tile_image = match bullet.direction {
-        Direction::Middle | Direction::Right => TileId::TILE_BULLET_RIGHT,
-        Direction::Left => TileId::TILE_BULLET_LEFT,
+    let tile_image = match (bullet.source, bullet.direction) {
+        (BulletSource::Monster, Direction::Left)    => TileId::TILE_ENEMY_BULLET_LEFT1,
+        (BulletSource::Monster, _)                  => TileId::TILE_ENEMY_BULLET_RIGHT1,
+        (BulletSource::Dave,    Direction::Left)    => TileId::TILE_BULLET_LEFT,
+        (BulletSource::Dave,    _)                  => TileId::TILE_BULLET_RIGHT,
     };
 
     let tile_image = assets.get_tile(tile_image);
