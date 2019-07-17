@@ -121,7 +121,9 @@ impl Level {
 pub struct MonsterPath([Position<i16>; 128]);
 
 impl MonsterPath {
-    pub const PATH_END: Position<i16> = Position { x: 0xEA, y: 0xEA };
+    // The casting feels a bit messy, but at least lets us keep the values as i16 for
+    // easy comparison.
+    pub const PATH_END: Position<i16> = Position { x: 0xEAu8 as i8 as i16, y: 0xEAu8 as i8 as i16 };
 }
 
 impl Index<MonsterPathIndex> for MonsterPath {
