@@ -32,6 +32,7 @@ pub enum DaveState {
 pub struct Dave {
     pub position: Position<u8>,
     pub pixel_position: Position<i16>,
+    pub animation_tick: usize,
 
     state: DaveState,
 
@@ -44,10 +45,6 @@ pub struct Dave {
 }
 
 impl Dave {
-    pub fn pixel_position(&self) -> Position<i16> {
-        self.pixel_position
-    }
-
     pub fn bullet(&self) -> Option<&Bullet> {
         self.bullet.as_ref()
     }
@@ -97,6 +94,7 @@ impl Dave {
         Dave {
             position: Default::default(),
             pixel_position: Default::default(),
+            animation_tick: 1,
 
             state: DaveState::Live {
                 move_type: MovementType::Walking {
@@ -173,7 +171,8 @@ impl Dave {
                     MovementType::Walking { jump, .. } => {
                         MovementType::Jetpack {
                             up: *jump,
-                            down: None
+                            down: None,
+                            fuel: 255,
                         }
                     },
                     MovementType::Jetpack { up, .. } => {
@@ -211,7 +210,7 @@ impl Dave {
                         }
                     }
                 },
-                MovementType::Jetpack { up, down } => {
+                MovementType::Jetpack { up, down, .. } => {
                     if *up == Do {
                         self.pixel_position.y -= 2;
                         *up = None;
@@ -226,12 +225,14 @@ impl Dave {
 
             if *right == Do {
                 self.pixel_position.x += 2;
+                self.animation_tick += 1;
                 *right = None;
                 *last_direction = Direction::Right;
             }
 
             if *left == Do {
                 self.pixel_position.x -= 2;
+                self.animation_tick += 1;
                 *left = None;
                 *last_direction = Direction::Left;
             }
@@ -287,7 +288,7 @@ impl Dave {
                         *jump = Do;
                     }
                 },
-                MovementType::Jetpack { up, down} => {
+                MovementType::Jetpack { up, down, ..} => {
                     if *down == Try && collision_point[4] && collision_point[5] {
                         *down = Do;
                     }
@@ -330,7 +331,7 @@ impl Dave {
                         *jump = MoveState::Try;
                     }
                 },
-                MovementType::Jetpack {up, down} => {
+                MovementType::Jetpack {up, down, ..} => {
                     if input.jump() {
                         *up = MoveState::Try;
                     }
@@ -395,7 +396,18 @@ impl Dave {
 
     pub fn update(&mut self) {
         match &mut self.state {
-            DaveState::Live {jetpack_delay,..} => *jetpack_delay = jetpack_delay.saturating_sub(1),
+            DaveState::Live {jetpack_delay, move_type, ..} => {
+                *jetpack_delay = jetpack_delay.saturating_sub(1);
+                if let MovementType::Jetpack {fuel, up, ..} = move_type {
+                    *fuel = fuel.saturating_sub(1);
+                    if *fuel == 0 {
+                        *move_type =  MovementType::Walking {
+                            jump: *up,
+                            jump_timer: 0,
+                        };
+                    }
+                }
+            },
             DaveState::Dying {dead_timer} => {
                 *dead_timer = dead_timer.saturating_sub(1);
                 if *dead_timer == 0 {
@@ -471,6 +483,7 @@ pub enum MovementType {
     Jetpack {
         up: MoveState,
         down: MoveState,
+        fuel: u8,
     },
 }
 

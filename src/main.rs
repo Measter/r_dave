@@ -24,6 +24,7 @@ use crate::{
     game::*,
     assets::*,
     input::Input,
+    renderer::*,
 };
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
@@ -48,6 +49,7 @@ fn main() -> Result<()> {
     let mut assets = Assets::init(window.create_texture_context())?;
     let mut input = Input::default();
     let mut game = Game::init()?;
+    let mut renderer = Renderer::new();
 
     while let Some(e) = window.next() {
         if let Some(key) = e.button_args() {
@@ -62,9 +64,10 @@ fn main() -> Result<()> {
             }
 
             input.clear_toggles();
+            renderer.update();
         }
 
-        renderer::render(&mut window, &e, &game, &assets);
+        renderer.render(&mut window, &e, &game, &assets);
     }
 
     Ok(())

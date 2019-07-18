@@ -81,14 +81,14 @@ impl LevelId {
     pub fn monsters(self) -> [Monster; 5] {
         match self.0 {
             2 => [
-                Monster::init_live(TileId::TILE_MONSTER_SPIDER1, Position { x: 44, y: 4 }),
-                Monster::init_live(TileId::TILE_MONSTER_SPIDER1, Position { x: 59, y: 4 }),
+                Monster::init_live(TileId::TILE_MONSTER_SPIDER, Position { x: 44, y: 4 }),
+                Monster::init_live(TileId::TILE_MONSTER_SPIDER, Position { x: 59, y: 4 }),
                 Monster::init_dead(),
                 Monster::init_dead(),
                 Monster::init_dead(),
             ],
             3 => [
-                Monster::init_live(TileId::TILE_MONSTER_WHEEL1, Position { x: 32, y: 2 }),
+                Monster::init_live(TileId::TILE_MONSTER_WHEEL, Position { x: 32, y: 2 }),
                 Monster::init_dead(),
                 Monster::init_dead(),
                 Monster::init_dead(),

@@ -32,7 +32,7 @@ impl Monster {
     pub fn tile_id(&self) -> TileId {
         match self.state {
             MonsterState::Live {tile_id, ..} => tile_id,
-            MonsterState::Dying {..} => TileId::TILE_MONSTER_DYING1,
+            MonsterState::Dying {..} => TileId::TILE_MONSTER_DYING,
             MonsterState::Dead => TileId::TILE_BLANK,
         }
     }
