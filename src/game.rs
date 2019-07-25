@@ -32,6 +32,26 @@ impl Game {
         self.misc.level
     }
 
+    pub fn score(&self) -> u32 {
+        self.misc.score
+    }
+
+    pub fn lives(&self) -> u8 {
+        self.misc.lives
+    }
+
+    pub fn has_trophy(&self) -> bool {
+        self.misc.has_trophy
+    }
+
+    pub fn has_gun(&self) -> bool {
+        self.dave.has_gun
+    }
+
+    pub fn has_jetpack(&self) -> HasJetpack {
+        self.dave.has_jetpack
+    }
+
     pub fn view_x(&self) -> u8 {
         self.misc.view_x
     }
@@ -104,12 +124,19 @@ impl Game {
 
         match *tile_type {
             // Add score and special item cases here later.
-            TileId::TILE_JETPACK => self.dave.has_jetpack = true,
+            TileId::TILE_JETPACK => self.dave.has_jetpack = HasJetpack::Yes(255),
             TileId::TILE_GUN => self.dave.has_gun = true,
             t if t.is_trophy() => {
                 self.misc.score += 1000;
                 self.misc.has_trophy = true;
             },
+
+            TileId::TILE_SCORE_BLUE_GEM => self.misc.score += 100,
+            TileId::TILE_SCORE_ORB      => self.misc.score += 50,
+            TileId::TILE_SCORE_RED_GEM  => self.misc.score += 150,
+            TileId::TILE_SCORE_CROWN    => self.misc.score += 300,
+            TileId::TILE_SCORE_RING     => self.misc.score += 200,
+            TileId::TILE_SCORE_SCEPTER  => self.misc.score += 500,
             _ => {}
         }
 
@@ -269,7 +296,7 @@ impl Bullet {
                         }
                     },
                     BulletSource::Monster => {
-                        if grid_x == dave_pos.x && (grid_y == dave_pos.y || grid_y == dave_pos.y + 1) {
+                        if grid_x == dave_pos.x && grid_y == dave_pos.y  {
                             return (CollisionType::Dave, visible);
                         }
                     }

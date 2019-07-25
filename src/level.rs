@@ -58,6 +58,10 @@ impl LevelId {
         }
     }
 
+    pub fn val(self) -> usize {
+        self.0
+    }
+
     pub const fn first_level() -> LevelId {
         LevelId(0)
     }

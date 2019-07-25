@@ -36,7 +36,7 @@ pub struct Dave {
 
     state: DaveState,
 
-    pub has_jetpack: bool,
+    pub has_jetpack: HasJetpack,
     pub has_gun: bool,
     bullet: Option<Bullet>,
 
@@ -113,7 +113,7 @@ impl Dave {
 
                 collision_point: [false; 8],
             },
-            has_jetpack: false,
+            has_jetpack: HasJetpack::No,
             has_gun: false,
             bullet: None,
 
@@ -172,7 +172,6 @@ impl Dave {
                         MovementType::Jetpack {
                             up: *jump,
                             down: None,
-                            fuel: 255,
                         }
                     },
                     MovementType::Jetpack { up, .. } => {
@@ -303,7 +302,7 @@ impl Dave {
                 *fire = Do;
             }
 
-            if self.has_jetpack && *toggle_jetpack == Try {
+            if self.has_jetpack != HasJetpack::No && *toggle_jetpack == Try {
                 if *jetpack_delay == 0 {
                     *toggle_jetpack = Do;
                     *jetpack_delay = 10;
@@ -389,7 +388,7 @@ impl Dave {
         self.level_restart(start_pos);
 
         self.has_gun = false;
-        self.has_jetpack = false;
+        self.has_jetpack = HasJetpack::No;
         self.check_door = false;
         self.bullet = None;
     }
@@ -398,9 +397,10 @@ impl Dave {
         match &mut self.state {
             DaveState::Live {jetpack_delay, move_type, ..} => {
                 *jetpack_delay = jetpack_delay.saturating_sub(1);
-                if let MovementType::Jetpack {fuel, up, ..} = move_type {
+                if let (MovementType::Jetpack {up, ..}, HasJetpack::Yes(fuel)) = (&mut *move_type, &mut self.has_jetpack) {
                     *fuel = fuel.saturating_sub(1);
                     if *fuel == 0 {
+                        self.has_jetpack = HasJetpack::No;
                         *move_type =  MovementType::Walking {
                             jump: *up,
                             jump_timer: 0,
@@ -483,8 +483,13 @@ pub enum MovementType {
     Jetpack {
         up: MoveState,
         down: MoveState,
-        fuel: u8,
     },
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum HasJetpack {
+    No,
+    Yes(u8),
 }
 
 impl MovementType {

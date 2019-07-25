@@ -3,12 +3,12 @@ use std::{
     ops::Index,
 };
 
-use image::{FilterType, Rgba};
+use image::{FilterType, Rgba, RgbaImage};
 use piston_window::{Texture, TextureSettings, G2dTextureContext, G2dTexture};
 
 use crate::{SCALE, Result};
 
-const NUM_TILES: u8 = 158;
+const NUM_TILES: u8 = 159;
 
 // See the level.rs file comment for the reason behind this data structure.
 
@@ -55,6 +55,24 @@ impl TileId {
     pub const TILE_MONSTER_BIG_DISK: TileId = TileId(TileId::TILE_ENEMY_BIG_DISK_FIRST);
 
     pub const TILE_MONSTER_DYING: TileId = TileId(129);
+
+    pub const TILE_UI_SCORE: TileId = TileId(137);
+    pub const TILE_UI_LEVEL: TileId = TileId(136);
+    pub const TILE_UI_DAVES: TileId = TileId(135);
+    pub const TILE_UI_DAVE: TileId = TileId(143);
+    pub const TILE_UI_TROPHY: TileId = TileId(138);
+    pub const TILE_UI_GUN: TileId = TileId(134);
+    pub const TILE_UI_JETPACK: TileId = TileId(133);
+    pub const TILE_UI_JETPACK_FUEL_BORDER: TileId = TileId(141);
+    pub const TILE_UI_JETPACK_FUEL_BAR: TileId = TileId(142);
+    pub const TILE_UI_BORDER: TileId = TileId(158);
+
+    pub const TILE_SCORE_BLUE_GEM: TileId = TileId(47);
+    pub const TILE_SCORE_ORB: TileId = TileId(48);
+    pub const TILE_SCORE_RED_GEM: TileId = TileId(49);
+    pub const TILE_SCORE_CROWN: TileId = TileId(50);
+    pub const TILE_SCORE_RING: TileId = TileId(51);
+    pub const TILE_SCORE_SCEPTER: TileId = TileId(52);
 
 
     // Animation frame info.
@@ -104,6 +122,7 @@ impl TileId {
     const TILE_ENEMY_BIG_DISK_FIRST: u8 = 117;
     const TILE_ENEMY_BIG_DISK_LAST: u8 = 120;
 
+    const TILE_UI_DIGIT_0: u8 = 148;
 }
 
 impl TileId {
@@ -179,6 +198,13 @@ impl TileId {
         }
     }
 
+    pub fn get_digit_tile(digit: u32) -> TileId {
+        match digit {
+            0..=9 => TileId(TileId::TILE_UI_DIGIT_0 + digit as u8),
+            _ => panic!("Invalid tile digit"),
+        }
+    }
+
     fn is_dave(id: u8) -> bool {
         match id {
             53..=59| 67 | 68 | 71..=73 | 77..=82 => true,
@@ -188,7 +214,7 @@ impl TileId {
 
     fn black_mask(id: u8) -> bool {
         match id {
-            89 ..=120 | 129..=132 => true,
+            89 ..=120 | 129..=132 | 142 => true,
             _ => false,
         }
     }
@@ -208,7 +234,7 @@ pub fn load_tileset(mut context: G2dTextureContext) -> Result<TileSet> {
     let mut tiles = Vec::new();
 
     let mut name_buf = String::new();
-    for i in 0..NUM_TILES {
+    for i in 0..NUM_TILES-1 {
         name_buf.clear();
         write!(&mut name_buf, "tiles/tile{}.bmp", i)?;
 
@@ -251,6 +277,32 @@ pub fn load_tileset(mut context: G2dTextureContext) -> Result<TileSet> {
 
         tiles.push(texture);
     }
+
+    // The border image above and below the play area seem to be generated at runtime.
+    // We'll do the same here.
+
+    let pixel = |p| match p {
+         0..= 7 | 24..=31 => Rgba([101, 101, 101, 255]),
+         8..=10 | 21..=23 => Rgba([125, 125, 125, 255]),
+        11..=12 | 19..=20 => Rgba([154, 154, 154, 255]),
+        13..=13 | 18..=18 => Rgba([182, 182, 182, 255]),
+        14..=14 | 17..=17 => Rgba([211, 211, 211, 255]),
+        15..=15 | 16..=16 => Rgba([239, 239, 239, 255]),
+        _ => Rgba([0, 0, 0, 255]),
+    };
+
+    let mut image = RgbaImage::new(32*SCALE, 2*SCALE);
+    for (x, _, d) in image.enumerate_pixels_mut() {
+        *d = pixel(x/SCALE);
+    }
+
+    let texture = Texture::from_image(
+        &mut context,
+        &image,
+        &TextureSettings::new()
+    )?;
+
+    tiles.push(texture);
 
     Ok(TileSet(tiles))
 }
