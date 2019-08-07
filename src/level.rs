@@ -66,7 +66,7 @@ impl LevelId {
         LevelId(0)
     }
 
-    pub fn start_position(self) -> Position<u8> {
+    pub fn start_position(self) -> Position<i8> {
         match self.0 {
             0 => Position { x: 2, y: 8 },
             1 => Position { x: 1, y: 8 },
@@ -96,6 +96,48 @@ impl LevelId {
                 Monster::init_dead(),
                 Monster::init_dead(),
                 Monster::init_dead(),
+                Monster::init_dead(),
+            ],
+            4 => [
+                Monster::init_live(TileId::TILE_MONSTER_STAR, Position { x: 15, y: 3 }),
+                Monster::init_live(TileId::TILE_MONSTER_STAR, Position { x: 33, y: 3 }),
+                Monster::init_live(TileId::TILE_MONSTER_STAR, Position { x: 49, y: 3 }),
+                Monster::init_dead(),
+                Monster::init_dead(),
+            ],
+            5 => [
+                Monster::init_live(TileId::TILE_MONSTER_BAR, Position { x: 10, y: 8 }),
+                Monster::init_live(TileId::TILE_MONSTER_BAR, Position { x: 28, y: 8 }),
+                Monster::init_live(TileId::TILE_MONSTER_BAR, Position { x: 45, y: 2 }),
+                Monster::init_live(TileId::TILE_MONSTER_BAR, Position { x: 40, y: 8 }),
+                Monster::init_dead(),
+            ],
+            6 => [
+                Monster::init_live(TileId::TILE_MONSTER_FLAT_DISK, Position { x:  5, y: 2 }),
+                Monster::init_live(TileId::TILE_MONSTER_FLAT_DISK, Position { x: 16, y: 1 }),
+                Monster::init_live(TileId::TILE_MONSTER_FLAT_DISK, Position { x: 46, y: 2 }),
+                Monster::init_live(TileId::TILE_MONSTER_FLAT_DISK, Position { x: 56, y: 3 }),
+                Monster::init_dead(),
+            ],
+            7 => [
+                Monster::init_live(TileId::TILE_MONSTER_MOUTH, Position { x: 53, y: 5 }),
+                Monster::init_live(TileId::TILE_MONSTER_MOUTH, Position { x: 72, y: 2 }),
+                Monster::init_live(TileId::TILE_MONSTER_MOUTH, Position { x: 84, y: 1 }),
+                Monster::init_dead(),
+                Monster::init_dead(),
+            ],
+            8 => [
+                Monster::init_live(TileId::TILE_MONSTER_GREEN_DISK, Position { x: 35, y: 8 }),
+                Monster::init_live(TileId::TILE_MONSTER_GREEN_DISK, Position { x: 41, y: 8 }),
+                Monster::init_live(TileId::TILE_MONSTER_GREEN_DISK, Position { x: 49, y: 8 }),
+                Monster::init_live(TileId::TILE_MONSTER_GREEN_DISK, Position { x: 65, y: 8 }),
+                Monster::init_dead(),
+            ],
+            9 => [
+                Monster::init_live(TileId::TILE_MONSTER_BIG_DISK, Position { x: 45, y: 8 }),
+                Monster::init_live(TileId::TILE_MONSTER_BIG_DISK, Position { x: 51, y: 2 }),
+                Monster::init_live(TileId::TILE_MONSTER_BIG_DISK, Position { x: 65, y: 3 }),
+                Monster::init_live(TileId::TILE_MONSTER_BIG_DISK, Position { x: 82, y: 5 }),
                 Monster::init_dead(),
             ],
             _ => [Monster::init_dead(), Monster::init_dead(), Monster::init_dead(), Monster::init_dead(), Monster::init_dead()],

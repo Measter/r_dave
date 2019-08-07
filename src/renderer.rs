@@ -185,6 +185,8 @@ impl Renderer {
                 Direction::Left => TileId::TILE_DAVE_JETPACK_LEFT.get_frame(self.tick),
                 Direction::Right => TileId::TILE_DAVE_JETPACK_RIGHT.get_frame(self.tick),
             }
+        } else if dave.is_climbing() {
+            TileId::TILE_DAVE_CLIMBING.get_frame(dave.animation_tick)
         } else if dave.is_on_ground() {
             match dave.direction() {
                 Direction::Middle => TileId::TILE_DAVE_BASIC,

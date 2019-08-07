@@ -1,5 +1,6 @@
 use crate::{
     TILE_SIZE,
+    SCALE,
     game::*,
     assets::*,
     level::*,
@@ -18,6 +19,7 @@ pub enum DaveState {
 
         last_direction: Direction,
         on_ground: bool,
+        can_climb: bool,
         jetpack_delay: u8,
 
         collision_point: [bool; 8],
@@ -30,7 +32,7 @@ pub enum DaveState {
 
 #[derive(Debug)]
 pub struct Dave {
-    pub position: Position<u8>,
+    pub position: Position<i8>,
     pub pixel_position: Position<i16>,
     pub animation_tick: usize,
 
@@ -67,6 +69,13 @@ impl Dave {
         }
     }
 
+    pub fn is_climbing(&self) -> bool {
+        match &self.state {
+            DaveState::Live { move_type, ..} => move_type.is_climbing(),
+            _ => false,
+        }
+    }
+
     pub fn is_on_ground(&self) -> bool {
         match self.state {
             DaveState::Live {on_ground, ..} => on_ground,
@@ -100,6 +109,7 @@ impl Dave {
                 move_type: MovementType::Walking {
                     jump: MoveState::None,
                     jump_timer: 0,
+                    climb: MoveState::None,
                 },
 
                 right: MoveState::None,
@@ -108,6 +118,7 @@ impl Dave {
                 fire: MoveState::None,
 
                 on_ground: true,
+                can_climb: false,
                 last_direction: Direction::Middle,
                 jetpack_delay: 0,
 
@@ -154,6 +165,11 @@ impl Dave {
     pub fn move_dave(&mut self) {
         use MoveState::*;
 
+        if self.position.y > 9{
+            self.position.y = 0;
+            self.pixel_position.y = -16 * SCALE as i16;
+        }
+
         if let DaveState::Live {
             move_type,
             toggle_jetpack,
@@ -163,6 +179,7 @@ impl Dave {
             right,
             left,
             fire,
+            can_climb,
             ..} = &mut self.state
         {
             if *toggle_jetpack == Do && *jetpack_delay == 0 {
@@ -178,26 +195,51 @@ impl Dave {
                         MovementType::Walking {
                             jump: *up,
                             jump_timer: 0,
+                            climb: None,
                         }
                     },
+
+                    _ => *move_type,
                 };
 
                 *move_type = next_move_type;
                 *toggle_jetpack = None;
             }
 
+            match (*can_climb, &mut *move_type) {
+                (true, MovementType::Walking { climb: Do, .. }) => {
+                    *move_type = MovementType::Climbing {
+                        up: None,
+                        down: None,
+                    };
+
+                    *can_climb = false;
+                },
+                (false, MovementType::Walking { climb, .. }) if *climb == Do => {
+                    *climb = None;
+                },
+                (false, MovementType::Climbing{ up, .. }) => {
+                    *move_type = MovementType::Walking {
+                        jump: *up,
+                        jump_timer: 30,
+                        climb: None,
+                    }
+                },
+                _ => {}
+            }
+
             match move_type {
-                MovementType::Walking { jump, jump_timer } => {
+                MovementType::Walking { jump, jump_timer , .. } => {
                     if *jump == Do {
                         if *jump_timer == 0 {
-                            *jump_timer = 25;
+                            *jump_timer = 30;
                             *last_direction = Direction::Middle;
                         }
 
                         if collision_point[0] && collision_point[1] {
                             match *jump_timer {
-                                0..=4 => {},
-                                5..=10 => self.pixel_position.y -= 1,
+                                0..=11 => {},
+                                12..=15 => self.pixel_position.y -= 1,
                                 _ => self.pixel_position.y -= 2
                             }
                         }
@@ -209,14 +251,16 @@ impl Dave {
                         }
                     }
                 },
-                MovementType::Jetpack { up, down, .. } => {
+                MovementType::Jetpack { up, down, .. } | MovementType::Climbing { up, down, .. } => {
                     if *up == Do {
                         self.pixel_position.y -= 2;
+                        self.animation_tick += 1;
                         *up = None;
                     }
 
                     if *down == Do {
                         self.pixel_position.y += 2;
+                        self.animation_tick += 1;
                         *down = None;
                     }
                 }
@@ -254,8 +298,8 @@ impl Dave {
                 *fire = None;
             }
 
-            self.position.x = (self.pixel_position.x / TILE_SIZE as i16) as u8;
-            self.position.y = (self.pixel_position.y / TILE_SIZE as i16) as u8;
+            self.position.x = (self.pixel_position.x / TILE_SIZE as i16) as i8;
+            self.position.y = (self.pixel_position.y / TILE_SIZE as i16) as i8;
         }
     }
 
@@ -271,6 +315,7 @@ impl Dave {
             jetpack_delay,
             on_ground,
             collision_point,
+            can_climb,
             ..} = &mut self.state
         {
             if *left == Try && collision_point[6] && collision_point[7] {
@@ -282,12 +327,18 @@ impl Dave {
             }
 
             match &mut *move_type {
-                MovementType::Walking { jump, ..} => {
-                    if *jump == Try && *on_ground && collision_point[0] && collision_point[1] {
+                MovementType::Walking { jump, climb, ..} => {
+                    if *jump == Try && *on_ground && !*can_climb && collision_point[0] && collision_point[1] {
                         *jump = Do;
+                        *climb = None;
+                    }
+
+                    if *jump == Try && *can_climb {
+                        *climb = Do;
+                        *jump = None;
                     }
                 },
-                MovementType::Jetpack { up, down, ..} => {
+                MovementType::Jetpack { up, down, ..} | MovementType::Climbing {up, down, ..} => {
                     if *down == Try && collision_point[4] && collision_point[5] {
                         *down = Do;
                     }
@@ -330,7 +381,7 @@ impl Dave {
                         *jump = MoveState::Try;
                     }
                 },
-                MovementType::Jetpack {up, down, ..} => {
+                MovementType::Jetpack {up, down, ..} | MovementType::Climbing {up, down, ..} => {
                     if input.jump() {
                         *up = MoveState::Try;
                     }
@@ -359,7 +410,7 @@ impl Dave {
         }
     }
 
-    pub fn level_restart(&mut self, start_pos: Position<u8>) {
+    pub fn level_restart(&mut self, start_pos: Position<i8>) {
         self.position = start_pos;
         self.pixel_position = Position {
             x: start_pos.x as i16 * TILE_SIZE as i16,
@@ -373,18 +424,20 @@ impl Dave {
             fire: MoveState::None,
 
             on_ground: false,
+            can_climb: false,
             jetpack_delay: 0,
             collision_point: [false; 8],
 
             move_type: MovementType::Walking {
                 jump: MoveState::None,
                 jump_timer: 0,
+                climb: MoveState::None,
             },
             last_direction: Direction::Middle,
         };
     }
 
-    pub fn new_level(&mut self, start_pos: Position<u8>) {
+    pub fn new_level(&mut self, start_pos: Position<i8>) {
         self.level_restart(start_pos);
 
         self.has_gun = false;
@@ -404,6 +457,7 @@ impl Dave {
                         *move_type =  MovementType::Walking {
                             jump: *up,
                             jump_timer: 0,
+                            climb: MoveState::None,
                         };
                     }
                 }
@@ -421,7 +475,7 @@ impl Dave {
     pub fn check_collision(&mut self, level: LevelId, assets: &Assets) {
         let mut kill_dave = false;
         match &mut self.state {
-            DaveState::Live {collision_point, on_ground, ..} => {
+            DaveState::Live {collision_point, on_ground, can_climb, ..} => {
                 let offsets = [
                     (4,  -1),
                     (10, -1),
@@ -433,6 +487,7 @@ impl Dave {
                     (3,   4),
                 ];
 
+                let mut local_can_climb = false;
                 for (i, &offset) in offsets.iter().enumerate() {
                     let coord = self.pixel_position + offset;
                     let col_type = is_clear(level, assets, coord);
@@ -452,11 +507,16 @@ impl Dave {
                             self.check_pickup = Position {x, y};
                             true
                         },
+                        Climbable => {
+                            local_can_climb = true;
+                            true
+                        }
                         _ => true,
                     };
                 }
 
-                *on_ground = !collision_point[4] || !collision_point[5];
+                *can_climb = local_can_climb;
+                *on_ground = (!collision_point[4] || !collision_point[5]) || *can_climb;
             },
             _ => {}
         }
@@ -474,16 +534,21 @@ impl Dave {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum MovementType {
     Walking {
         jump: MoveState,
         jump_timer: u8,
+        climb: MoveState,
     },
     Jetpack {
         up: MoveState,
         down: MoveState,
     },
+    Climbing {
+        up: MoveState,
+        down: MoveState,
+    }
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -495,6 +560,14 @@ pub enum HasJetpack {
 impl MovementType {
     fn is_jetpack(&self) -> bool {
         if let MovementType::Jetpack {..} = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn is_climbing(&self) -> bool {
+        if let MovementType::Climbing {..} = self {
             true
         } else {
             false

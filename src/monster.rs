@@ -9,14 +9,14 @@ use crate::{
 #[derive(Debug)]
 pub enum MonsterState {
     Live {
-        position: Position<u8>,
+        position: Position<i8>,
         pixel_position: Position<i16>,
         tile_id: TileId,
         path_index: MonsterPathIndex,
         next_px: Position<i16>,
     },
     Dying {
-        position: Position<u8>,
+        position: Position<i8>,
         pixel_position: Position<i16>,
         dead_timer: u8,
     },
@@ -37,7 +37,7 @@ impl Monster {
         }
     }
 
-    pub fn position(&self) -> Position<u8> {
+    pub fn position(&self) -> Position<i8> {
         match self.state {
             MonsterState::Live {position, ..} => position,
             MonsterState::Dying {position, ..} => position,
@@ -69,7 +69,7 @@ impl Monster {
 }
 
 impl Monster {
-    pub fn init_live(tile_id: TileId, pos: Position<u8>) -> Monster {
+    pub fn init_live(tile_id: TileId, pos: Position<i8>) -> Monster {
         Monster {
             state: MonsterState::Live {
                 position: pos,
@@ -94,42 +94,45 @@ impl Monster {
         match &mut self.state {
             MonsterState::Live {position, pixel_position, next_px, path_index, ..} => {
                 let path = assets.get_level(level).path();
-                if next_px.x == 0 && next_px.y == 0 {
-                    *next_px = path[*path_index];
-                    *path_index = path_index.next();
+
+                for _ in 0..2 {
+                    if next_px.x == 0 && next_px.y == 0 {
+                        *next_px = path[*path_index];
+                        *path_index = path_index.next();
+                    }
+
+
+                    if *next_px == MonsterPath::PATH_END {
+                        let start = MonsterPathIndex::START;
+                        *next_px = path[start];
+                        *path_index = start.next();
+                    }
+
+                    if next_px.x < 0 {
+                        pixel_position.x -= 1;
+                        next_px.x += 1;
+                    } else if next_px.x > 0 {
+                        pixel_position.x += 1;
+                        next_px.x -= 1;
+                    }
+
+                    if next_px.y < 0 {
+                        pixel_position.y -= 1;
+                        next_px.y += 1;
+                    } else if next_px.y > 0 {
+                        pixel_position.y += 1;
+                        next_px.y -= 1;
+                    }
                 }
 
-
-                if *next_px == MonsterPath::PATH_END {
-                    let start = MonsterPathIndex::START;
-                    *next_px = path[start];
-                    *path_index = start.next();
-                }
-
-                if next_px.x < 0 {
-                    pixel_position.x -= 1;
-                    next_px.x += 1;
-                } else if next_px.x > 0 {
-                    pixel_position.x += 1;
-                    next_px.x -= 1;
-                }
-
-                if next_px.y < 0 {
-                    pixel_position.y -= 1;
-                    next_px.y += 1;
-                } else if next_px.y > 0 {
-                    pixel_position.y += 1;
-                    next_px.y -= 1;
-                }
-
-                position.x = (pixel_position.x / TILE_SIZE as i16) as u8;
-                position.y = (pixel_position.y / TILE_SIZE as i16) as u8;
+                position.x = (pixel_position.x / TILE_SIZE as i16) as i8;
+                position.y = (pixel_position.y / TILE_SIZE as i16) as i8;
             },
             _ => {},
         }
     }
 
-    pub fn try_fire_bullet(&mut self, dave_pos: Position<i16>, view_x: u8) -> Option<Bullet> {
+    pub fn try_fire_bullet(&mut self, dave_pos: Position<i16>, view_x: i8) -> Option<Bullet> {
         match &mut self.state {
             MonsterState::Live {position, pixel_position, ..} if is_visible(position.x, view_x) => {
                 let dir = if dave_pos.x < pixel_position.x {

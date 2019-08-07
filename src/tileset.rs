@@ -35,6 +35,7 @@ impl TileId {
     pub const TILE_DAVE_JETPACK_LEFT: TileId = TileId(TileId::TILE_DAVE_JETPACK_LEFT_FIRST);
     pub const TILE_DAVE_JUMP_RIGHT: TileId = TileId(67);
     pub const TILE_DAVE_JUMP_LEFT: TileId = TileId(68);
+    pub const TILE_DAVE_CLIMBING: TileId = TileId(TileId::TILE_DAVE_CLIMBING_FIRST);
 
     pub const TILE_BLANK: TileId = TileId(0);
     pub const TILE_GUN: TileId = TileId(20);
@@ -99,6 +100,8 @@ impl TileId {
     const TILE_DAVE_JETPACK_RIGHT_LAST: u8 = 79;
     const TILE_DAVE_JETPACK_LEFT_FIRST: u8 = 80;
     const TILE_DAVE_JETPACK_LEFT_LAST: u8 = 82;
+    const TILE_DAVE_CLIMBING_FIRST: u8 = 71;
+    const TILE_DAVE_CLIMBING_LAST: u8 = 73;
 
     const TILE_ENEMY_BULLET_RIGHT_FIRST: u8 = 121;
     const TILE_ENEMY_BULLET_RIGHT_LAST: u8 = 123;
@@ -146,6 +149,7 @@ impl TileId {
             TileId::TILE_DAVE_LEFT_FIRST            => TileId::TILE_DAVE_LEFT_LAST,
             TileId::TILE_DAVE_JETPACK_RIGHT_FIRST   => TileId::TILE_DAVE_JETPACK_RIGHT_LAST,
             TileId::TILE_DAVE_JETPACK_LEFT_FIRST    => TileId::TILE_DAVE_JETPACK_LEFT_LAST,
+            TileId::TILE_DAVE_CLIMBING_FIRST        => TileId::TILE_DAVE_CLIMBING_LAST,
 
             TileId::TILE_ENEMY_BULLET_RIGHT_FIRST   => TileId::TILE_ENEMY_BULLET_RIGHT_LAST,
             TileId::TILE_ENEMY_BULLET_LEFT_FIRST    => TileId::TILE_ENEMY_BULLET_LEFT_LAST,
@@ -194,6 +198,13 @@ impl TileId {
     pub fn is_trophy(self) -> bool {
         match self.0 {
             10..=14 => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_climbable(self) -> bool {
+        match self.0 {
+            33..=35 | 41 => true,
             _ => false,
         }
     }

@@ -19,7 +19,7 @@ pub struct Game {
 #[derive(Debug)]
 struct MiscParts {
     level: LevelId,
-    view_x: u8,
+    view_x: i8,
     scroll_x: i16,
     score: u32,
     lives: u8,
@@ -52,7 +52,7 @@ impl Game {
         self.dave.has_jetpack
     }
 
-    pub fn view_x(&self) -> u8 {
+    pub fn view_x(&self) -> i8 {
         self.misc.view_x
     }
 
@@ -77,7 +77,7 @@ impl Game {
     pub fn init() -> Result<Self> {
         let mut game = Game {
             misc: MiscParts {
-                level: LevelId::first_level().next().unwrap().next().unwrap().next().unwrap(),
+                level: LevelId::first_level(),
                 view_x: 0,
                 scroll_x: 0,
                 score: 0,
@@ -109,7 +109,7 @@ impl Game {
         }
 
         if self.misc.scroll_x < 0 {
-            self.misc.view_x = self.misc.view_x.checked_sub(1).unwrap_or(0);
+            self.misc.view_x = self.misc.view_x.checked_sub(1).map(|p| p.max(0)).unwrap_or(0);
             self.misc.scroll_x += 1;
         }
     }
@@ -127,16 +127,16 @@ impl Game {
             TileId::TILE_JETPACK => self.dave.has_jetpack = HasJetpack::Yes(255),
             TileId::TILE_GUN => self.dave.has_gun = true,
             t if t.is_trophy() => {
-                self.misc.score += 1000;
+                self.add_score(1000);
                 self.misc.has_trophy = true;
             },
 
-            TileId::TILE_SCORE_BLUE_GEM => self.misc.score += 100,
-            TileId::TILE_SCORE_ORB      => self.misc.score += 50,
-            TileId::TILE_SCORE_RED_GEM  => self.misc.score += 150,
-            TileId::TILE_SCORE_CROWN    => self.misc.score += 300,
-            TileId::TILE_SCORE_RING     => self.misc.score += 200,
-            TileId::TILE_SCORE_SCEPTER  => self.misc.score += 500,
+            TileId::TILE_SCORE_BLUE_GEM => self.add_score(100),
+            TileId::TILE_SCORE_ORB      => self.add_score(50),
+            TileId::TILE_SCORE_RED_GEM  => self.add_score(150),
+            TileId::TILE_SCORE_CROWN    => self.add_score(300),
+            TileId::TILE_SCORE_RING     => self.add_score(200),
+            TileId::TILE_SCORE_SCEPTER  => self.add_score(500),
             _ => {}
         }
 
@@ -183,6 +183,7 @@ impl Game {
     fn update_level(&mut self) {
         if self.dave.check_door {
             if self.misc.has_trophy {
+                self.add_score(2000);
                 if let Some(next) = self.misc.level.next() {
                     self.misc.level = next;
                     self.start_level();
@@ -213,6 +214,14 @@ impl Game {
                 }
             }
         }
+    }
+
+    fn add_score(&mut self, new_score: u32) {
+        if self.misc.score / 20_000 != (self.misc.score + new_score) / 20_000 {
+            self.misc.lives += 1;
+        }
+
+        self.misc.score += new_score;
     }
 
     pub fn update(&mut self, assets: &mut Assets) {
@@ -265,7 +274,7 @@ pub struct Bullet {
 }
 
 impl Bullet {
-    fn update_bullet(&mut self, dave_pos: Position<u8>, monsters: &[Monster], level_misc: &MiscParts, assets: &Assets) -> (CollisionType, bool) {
+    fn update_bullet(&mut self, dave_pos: Position<i8>, monsters: &[Monster], level_misc: &MiscParts, assets: &Assets) -> (CollisionType, bool) {
         let dir_mult = match self.direction {
             Direction::Right | Direction::Middle => 1,
             Direction::Left => -1,
@@ -273,8 +282,8 @@ impl Bullet {
 
         self.position.x += dir_mult * 4;
 
-        let grid_x = (self.position.x / TILE_SIZE as i16) as u8;
-        let grid_y = (self.position.y / TILE_SIZE as i16) as u8;
+        let grid_x = (self.position.x / TILE_SIZE as i16) as i8;
+        let grid_y = (self.position.y / TILE_SIZE as i16) as i8;
         let hit = is_clear(level_misc.level, assets, self.position);
         let visible = is_visible(grid_x, level_misc.view_x);
 
@@ -317,6 +326,7 @@ pub enum CollisionType {
     Door,
     Dave,
     Monster(usize),
+    Climbable,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
@@ -340,6 +350,10 @@ pub fn is_clear(level: LevelId, assets: &Assets, pos: Position<i16>) -> Collisio
     let grid_x = pos.x as usize / TILE_SIZE as usize;
     let grid_y = pos.y as usize / TILE_SIZE as usize;
 
+    if grid_x > 99 || grid_y > 9 {
+        return CollisionType::None;
+    }
+
     let level = assets.get_level(level);
     let tile_type = level.tiles()[grid_y*100+grid_x];
 
@@ -351,12 +365,14 @@ pub fn is_clear(level: LevelId, assets: &Assets, pos: Position<i16>) -> Collisio
         CollisionType::Pickup(grid_x as u8, grid_y as u8)
     } else if tile_type.is_door() {
         CollisionType::Door
+    } else if tile_type.is_climbable() {
+        CollisionType::Climbable
     } else {
         CollisionType::None
     }
 }
 
-pub fn is_visible(pos_x: u8, view_x: u8) -> bool {
+pub fn is_visible(pos_x: i8, view_x: i8) -> bool {
     if pos_x < view_x {
         false
     } else if pos_x - view_x < 20 {
